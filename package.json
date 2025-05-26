@@ -6,23 +6,40 @@
 		"dev": "next dev",
 		"build": "next build",
 		"start": "next start",
-		"lint": "next lint"
+		"lint": "next lint",
+		"server": "node server.js"
 	},
 	"dependencies": {
 		"@ant-design/icons": "^5.3.0",
-		"@telegram-apps/sdk": "^3.9.2",
+		"@reduxjs/toolkit": "^2.2.1",
 		"antd": "^5.14.1",
+		"axios": "^1.6.7",
+		"cors": "^2.8.5",
+		"dotenv": "^16.4.5",
+		"express": "^4.18.2",
+		"js-cookie": "^3.0.5",
 		"next": "14.1.0",
-		"react": "^18.2.0",
-		"react-dom": "^18.2.0",
-		"telegraf": "^4.15.3",
-		"typescript": "^5.3.3"
+		"react": "^18",
+		"react-dom": "^18",
+		"react-measure": "^2.5.2",
+		"react-redux": "^9.1.0",
+		"react-window": "^1.8.11",
+		"telegram": "^2.19.10"
 	},
 	"devDependencies": {
-		"@types/node": "^20.11.19",
-		"@types/react": "^18.2.57",
-		"@types/react-dom": "^18.2.19",
-		"eslint": "^8.56.0",
-		"eslint-config-next": "14.1.0"
+		"@types/cors": "^2.8.17",
+		"@types/express": "^4.17.21",
+		"@types/js-cookie": "^3.0.6",
+		"@types/node": "^20",
+		"@types/react": "^18",
+		"@types/react-dom": "^18",
+		"@types/react-measure": "^2.0.12",
+		"@types/react-window": "^1.8.8",
+		"autoprefixer": "^10.0.1",
+		"eslint": "^8",
+		"eslint-config-next": "14.1.0",
+		"postcss": "^8",
+		"tailwindcss": "^3.3.0",
+		"typescript": "^5"
 	}
 }

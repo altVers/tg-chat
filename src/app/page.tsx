@@ -1,25 +1,29 @@
-"use client";
+"use client"
 
-import { Layout, Typography } from "antd";
-import ChatForm from "@/components/chat-form";
-import { useTelegramSDK } from "@/hooks/use-telegram-sdk";
-
-const { Header, Content } = Layout;
-const { Title } = Typography;
+import { useEffect } from "react"
+import { useSelector } from "react-redux"
+import { RootState } from "@/store"
+import { useRouter } from "next/navigation"
 
 export default function Home() {
-	useTelegramSDK();
+	const { isAuthenticated, sessionId, authLoading } = useSelector((state: RootState) => state.auth)
+	const router = useRouter()
+
+	useEffect(() => {
+		if (!authLoading) {
+			if (isAuthenticated && sessionId) {
+				console.log("Home Page useEffect: Authenticated, redirecting to /chat");
+				router.push("/chat")
+			} else {
+				console.log("Home Page useEffect: Not authenticated, redirecting to /auth");
+				router.push("/auth")
+			}
+		}
+	}, [isAuthenticated, sessionId, authLoading, router])
 
 	return (
-		<Layout className="min-h-screen">
-			<Header style={{ background: "#fff", padding: "24px", height: "100%" }}>
-				<Title level={3} style={{ margin: 0, color: "#000" }}>
-					Telegram Chat
-				</Title>
-			</Header>
-			<Content className="p-6">
-				<ChatForm />
-			</Content>
-		</Layout>
-	);
-}
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+            Загрузка...
+        </div>
+    );
+} 
