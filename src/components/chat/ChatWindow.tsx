@@ -218,6 +218,28 @@ export function ChatWindow() {
 
 	return (
 		<div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+			<header style={{ 
+				display: "flex", 
+				alignItems: "center", 
+				padding: "16px", 
+				background: "#f5f5f5",
+				borderBottom: "1px solid #e8e8e8"
+			}}>
+				<Avatar 
+					src={chats.find(chat => chat.id === activeChat)?.photoUrl} 
+					style={{ marginRight: "12px" }}
+				>
+					{chats.find(chat => chat.id === activeChat)?.title?.[0]}
+				</Avatar>
+				<div>
+					<div style={{ 
+						fontWeight: "500", 
+						fontSize: "16px"
+					}}>
+						{chats.find(chat => chat.id === activeChat)?.title}
+					</div>
+				</div>
+			</header>
 			<div style={{ flex: 1, overflowY: "auto", padding: "16px", boxSizing: "border-box" }}>
 				{isLoadingMessages ? (
 					<div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
