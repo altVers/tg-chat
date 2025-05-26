@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
-import { subscribeToUpdates } from "@/lib/telegram"
+import { telegramService } from "@/services/telegram"
+import { TelegramUpdate } from "@/types/telegram"
 
 export const dynamic = "force-dynamic"
 
@@ -8,7 +9,7 @@ export async function GET() {
 	const stream = new ReadableStream({
 		start(controller) {
 			// Подписываемся на обновления
-			subscribeToUpdates((update) => {
+			telegramService.subscribeToUpdates((update: TelegramUpdate) => {
 				controller.enqueue(encoder.encode(`data: ${JSON.stringify(update)}\n\n`))
 			})
 
