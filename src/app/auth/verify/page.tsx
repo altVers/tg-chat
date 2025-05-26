@@ -4,6 +4,8 @@ import VerificationCodeForm from "@/components/VerificationCodeForm";
 
 export default function VerifyPage() {
   return (
-    <VerificationCodeForm />
+    <div className="flex justify-center items-center h-screen px-4">
+      <VerificationCodeForm />
+    </div>
   );
 } 

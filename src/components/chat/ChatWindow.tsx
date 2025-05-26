@@ -6,7 +6,7 @@ import { Input, Button, List, Avatar, message, Spin } from "antd"
 import { SendOutlined } from "@ant-design/icons"
 import { RootState } from "@/store"
 import { telegramService } from "@/services/telegram"
-import { ChatState, setMessages } from "@/store/slices/chatSlice"
+import { ChatState, setMessages, setChats } from "@/store/slices/chatSlice"
 import { Message, Chat } from "@/store/slices/chatSlice"
 import { createSelector } from '@reduxjs/toolkit'
 import { useParticipantsPhotos } from "@/hooks/useParticipantsPhotos"
@@ -74,17 +74,18 @@ const selectCurrentUserPhotoUrl = createSelector(
 
 export function ChatWindow() {
 	const dispatch = useDispatch()
-	// Используем мемоизированные селекторы
-	const activeChat = useSelector(selectActiveChat);
-	const messages = useSelector(selectMessages);
-	const chats = useSelector(selectChats); // chats все еще нужен для getMessageSenderPhoto
-	const sessionId = useSelector(selectSessionId);
-	const isAuthenticated = useSelector(selectIsAuthenticated);
-	const currentUserId = useSelector(selectCurrentUserId);
-	const currentUserPhotoUrl = useSelector(selectCurrentUserPhotoUrl);
-
-	const messagesEndRef = useRef<HTMLDivElement>(null)
+	const [inputValue, setInputValue] = useState("")
 	const [isLoadingMessages, setIsLoadingMessages] = useState(false)
+	const messagesEndRef = useRef<HTMLDivElement>(null)
+
+	// Используем мемоизированные селекторы
+	const activeChat = useSelector(selectActiveChat)
+	const messages = useSelector(selectMessages)
+	const chats = useSelector(selectChats)
+	const sessionId = useSelector(selectSessionId)
+	const isAuthenticated = useSelector(selectIsAuthenticated)
+	const currentUserId = useSelector(selectCurrentUserId)
+	const currentUserPhotoUrl = useSelector(selectCurrentUserPhotoUrl)
 
 	const isGroupChat = activeChat ? chats.find(chat => chat.id === activeChat)?.type === "group" : false
 	const { photos: participantsPhotos, isLoading: isLoadingPhotos } = useParticipantsPhotos(
@@ -93,12 +94,13 @@ export function ChatWindow() {
 		isGroupChat
 	)
 
+	// Загрузка сообщений при выборе диалога
 	useEffect(() => {
-		if (isAuthenticated && sessionId && activeChat) {
-			setIsLoadingMessages(true)
-
-			telegramService.getChatHistory(sessionId, activeChat)
-				.then(async fetchedMessages => {
+		const loadMessages = async () => {
+			if (isAuthenticated && sessionId && activeChat) {
+				setIsLoadingMessages(true)
+				try {
+					const fetchedMessages = await telegramService.getChatHistory(sessionId, activeChat)
 					const formattedMessages = fetchedMessages.map(msg => ({
 						id: msg.id,
 						text: msg.text,
@@ -109,28 +111,25 @@ export function ChatWindow() {
 
 					const sortedMessages = formattedMessages.sort((a, b) => a.timestamp - b.timestamp)
 					dispatch(setMessages({ chatId: activeChat, messages: sortedMessages }))
-					setIsLoadingMessages(false)
-
-				})
-				.catch(error => {
+				} catch (error) {
 					console.error("Ошибка при загрузке сообщений:", error)
+					message.error("Не удалось загрузить сообщения")
+				} finally {
 					setIsLoadingMessages(false)
-				})
-		} else if (!isAuthenticated) {
-			console.log("Пользователь не авторизован, сообщения не загружаются.")
-		} else if (isAuthenticated && !activeChat) {
-			console.log("Чат не выбран, сообщения не загружаются.")
+				}
+			}
 		}
-	}, [isAuthenticated, sessionId, activeChat, dispatch, currentUserId, currentUserPhotoUrl, chats])
 
+		loadMessages()
+	}, [activeChat, isAuthenticated, sessionId, dispatch])
+
+	// Прокрутка к последнему сообщению
 	useEffect(() => {
-		// Прокрутка к последнему сообщению при загрузке или обновлении сообщений для активного чата
-		// Используем setTimeout с задержкой 0 для выполнения после обновления DOM
 		if (activeChat && messages[activeChat]?.length > 0) {
 			const timer = setTimeout(() => {
-				messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
-			}, 0);
-			return () => clearTimeout(timer);
+				messagesEndRef.current?.scrollIntoView({ behavior: "instant" })
+			}, 0)
+			return () => clearTimeout(timer)
 		}
 	}, [messages, activeChat])
 
@@ -139,6 +138,37 @@ export function ChatWindow() {
 			try {
 				await telegramService.sendMessage(sessionId, activeChat, text.trim())
 				console.log("Сообщение отправлено:", text)
+				
+				// Добавляем новое сообщение в список
+				const newMessage = {
+					id: Date.now(),
+					text: text.trim(),
+					senderId: currentUserId?.toString(),
+					receiverId: activeChat,
+					timestamp: Math.floor(Date.now() / 1000)
+				}
+				
+				// Обновляем сообщения в Redux store
+				dispatch(setMessages({ 
+					chatId: activeChat, 
+					messages: [...(messages[activeChat] || []), newMessage] 
+				}))
+
+				// Обновляем lastMessage в диалоге
+				const updatedChats = chats.map(chat => {
+					if (chat.id === activeChat) {
+						return {
+							...chat,
+							lastMessage: text.trim(),
+							lastMessageTimestamp: Math.floor(Date.now() / 1000)
+						}
+					}
+					return chat
+				})
+				dispatch(setChats(updatedChats))
+				
+				// Очищаем инпут
+				setInputValue("")
 			} catch (error) {
 				console.error("Ошибка при отправке сообщения:", error)
 				message.error("Не удалось отправить сообщение.")
@@ -251,6 +281,8 @@ export function ChatWindow() {
 			{activeChat && (
 				<div style={{ padding: "16px", borderTop: "1px solid #f0f0f0" }}>
 					<Input.Search
+						value={inputValue}
+						onChange={(e) => setInputValue(e.target.value)}
 						placeholder="Введите сообщение..."
 						enterButton={
 							<Button type="primary" icon={<SendOutlined />}>
